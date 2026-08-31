@@ -1,6 +1,7 @@
 from flask import Flask, render_template_string, request, redirect
 import os, json
 from werkzeug.utils import secure_filename
+from urllib.parse import quote
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -19,43 +20,44 @@ HTML = """
 <style>
 body{font-family:Arial;margin:0;background:#fff0f6}
 .header{background:#fff;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px #ffb6d9;position:sticky;top:0;z-index:10}
-.logo{font-size:22px;color:#ff1493;font-weight:bold}
-.nav a{margin:5px;color:#ff1493;text-decoration:none;font-weight:bold;font-size:13px}
-.banner{background:linear-gradient(135deg,#ff1493,#ff69b4);color:white;text-align:center;padding:25px 10px}
+.logo{font-size:20px;color:#ff1493;font-weight:bold}
+.nav a{margin:4px;color:#ff1493;text-decoration:none;font-weight:bold;font-size:12px}
+.banner{background:linear-gradient(135deg,#ff1493,#ff69b4);color:white;text-align:center;padding:20px 10px}
 .products{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
 .card{background:white;border-radius:15px;padding:10px;text-align:center;box-shadow:0 4px 10px rgba(255,20,147,0.2)}
-.card img{width:100%;height:150px;object-fit:cover;border-radius:10px;cursor:zoom-in}
+.card img{width:100%;height:140px;object-fit:cover;border-radius:10px;cursor:zoom-in}
 .price{color:#ff1493;font-weight:bold}
-.btn-add{background:#ff1493;color:white;padding:9px;border:none;border-radius:20px;width:100%;margin-top:6px;font-weight:bold;font-size:13px}
-.footer{background:#ff1493;color:white;text-align:center;padding:12px;margin-top:15px;font-size:13px}
-/* BIG IMAGE MODAL */
+.btn-add{background:#ff1493;color:white;padding:8px;border:none;border-radius:20px;width:100%;margin-top:5px;font-weight:bold;font-size:12px}
+.btn-wa{background:#25D366;color:white;padding:8px;border:none;border-radius:20px;width:100%;margin-top:5px;font-weight:bold;font-size:12px}
+.footer{background:#ff1493;color:white;text-align:center;padding:12px;margin-top:15px;font-size:12px}
 .modal{display:none;position:fixed;z-index:99;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.9);justify-content:center;align-items:center;flex-direction:column}
-.modal img{max-width:90%;max-height:70%;border-radius:15px}
-.modal h3{color:white;margin:10px}
+.modal img{max-width:90%;max-height:65%;border-radius:15px}
+.modal h3{color:white;margin:8px;text-align:center}
 .close{color:white;font-size:35px;position:absolute;top:10px;right:20px}
 </style></head><body>
 <div class="header"><div class="logo">💖 Lwah's Tekkies</div><div class="nav"><a href="/">Shop</a> <a href="/upload">Upload</a> <a href="#" onclick="checkoutWA()">🛒(<span id="cartCount">0</span>)</a></div></div>
-<div class="banner"><h2 style="margin:0">Step Out. Stand Out. 👑</h2><p style="margin:5px">Click picture to view big!</p></div>
+<div class="banner"><h3 style="margin:0">Step Out. Stand Out. 👑</h3><p style="margin:3px;font-size:13px">Click pic to view big!</p></div>
 <div class="products">
 {% for p in products %}
 <div class="card">
 <img src="{{p.image}}" onclick="openModal('{{p.image}}','{{p.name}} - R{{p.price}}')">
-<h4 style="margin:6px 0">{{p.name}}</h4>
+<h4 style="margin:5px 0;font-size:14px">{{p.name}}</h4>
 <div class="price">R{{p.price}}</div>
-<p style="font-size:12px;margin:4px">{{p.desc}}</p>
+<p style="font-size:11px;margin:3px">{{p.desc}}</p>
 <button class="btn-add" onclick="addToCart('{{p.name}}','{{p.price}}')">Add to Cart 🛒</button>
+<a href="https://wa.me/27815666133?text={{p.wa_msg}}" target="_blank"><button class="btn-wa">WhatsApp Order 📱</button></a>
 </div>
 {% endfor %}
 </div>
-<div id="imgModal" class="modal" onclick="closeModal()"><span class="close">&times;</span><img id="modalImg"><h3 id="modalTitle"></h3><p style="color:white">Tap anywhere to close</p></div>
-<div class="footer">© Lwah's Tekkies | 081 566 6133 | Durban 💖</div>
+<div id="imgModal" class="modal" onclick="closeModal()"><span class="close">&times;</span><img id="modalImg"><h3 id="modalTitle"></h3><p style="color:white;font-size:13px">Tap to close</p></div>
+<div class="footer">© Lwah's Tekkies | 081 566 6133 💖</div>
 <script>
 let cart=JSON.parse(localStorage.getItem('lwahCart')||'[]');updateCount();
 function openModal(src,title){document.getElementById('imgModal').style.display='flex';document.getElementById('modalImg').src=src;document.getElementById('modalTitle').innerText=title;}
 function closeModal(){document.getElementById('imgModal').style.display='none';}
-function addToCart(n,p){cart.push({name:n,price:p});localStorage.setItem('lwahCart',JSON.stringify(cart));updateCount();alert(n+' added! Cart: '+cart.length);}
+function addToCart(n,p){cart.push({name:n,price:p});localStorage.setItem('lwahCart',JSON.stringify(cart));updateCount();alert(n+' added! 🛒 Cart: '+cart.length);}
 function updateCount(){document.getElementById('cartCount').innerText=cart.length;}
-function checkoutWA(){if(cart.length==0){alert('Cart empty! Add tekkies 👑');return;}let msg='Hi Lwah! 👑 I want to order:%0A';let total=0;cart.forEach((it,i)=>{msg+=`${i+1}. ${it.name} - R${it.price}%0A`;total+=parseInt(it.price)||0;});msg+=`%0ATotal: R${total}`;window.open('https://wa.me/27815666133?text='+msg,'_blank');}
+function checkoutWA(){if(cart.length==0){alert('Cart empty! Add items 👑');return;}let msg='Hi Lwah! 👑 I want to order:%0A';let total=0;cart.forEach((it,i)=>{msg+=`${i+1}. ${it.name} - R${it.price}%0A`;total+=parseInt(it.price)||0;});msg+=`%0ATotal: R${total}`;window.open('https://wa.me/27815666133?text='+msg,'_blank');}
 </script></body></html>
 """
 
@@ -71,7 +73,10 @@ UPLOAD_HTML = """<!DOCTYPE html><html><head><meta name="viewport" content="width
 @app.route('/')
 def home():
     products=load_products()
-    for p in products: p['price']=str(p['price']).replace('R','').strip()
+    for p in products:
+        p['price']=str(p['price']).replace('R','').strip()
+        msg=f"Hi Lwah! I want {p['name']} - R{p['price']} - {p['desc']}. Is it available? 👑"
+        p['wa_msg']=quote(msg)
     return render_template_string(HTML, products=products)
 @app.route('/upload', methods=['GET','POST'])
 def upload():
